@@ -11,7 +11,10 @@ const cosineSimilarity = (vecA, vecB) => {
 };
 
 // Below this, even the best match is treated as "no relevant context".
-const MIN_SCORE = 0.25;
+// MiniLM gives all tech topics a baseline ~0.25-0.35 similarity, so an
+// off-topic question ("what is typescript") would falsely match the RAG/JS
+// chunks. A genuinely relevant match scores ~0.45+, so 0.4 filters the noise.
+const MIN_SCORE = 0.4;
 // A secondary chunk is kept only if it's at least this fraction of the top score.
 const RELATIVE_GAP = 0.6;
 

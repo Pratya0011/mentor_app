@@ -1,3 +1,9 @@
+// Expose native XHR to DevTools so the Network tab captures fetch() calls.
+if (__DEV__) {
+  // @ts-expect-error RN internal
+  global.XMLHttpRequest = global.originalXMLHttpRequest ?? global.XMLHttpRequest;
+}
+
 import { useState } from 'react';
 
 import ChatScreen from './src/screens/ChatScreen';

@@ -4,9 +4,9 @@
  * the most relevant chunks. Generation then happens on-device with Qwen.
  */
 
-// Android emulator reaches the host machine via 10.0.2.2.
-// For a real phone, change this to your Mac's LAN IP, e.g. http://192.168.1.5:8080
-export const API_BASE = 'http://10.0.2.2:8080';
+// Backend hosted on Render. Works from the emulator and a real phone alike
+// (no LAN-IP juggling). For local backend dev, swap to http://10.0.2.2:8080.
+export const API_BASE = 'https://mentor-app-9izg.onrender.com';
 
 export type RetrievedChunk = {
   id: string;
@@ -22,17 +22,23 @@ export type RetrieveResult = {
 
 /** Sends the question to the backend and returns the retrieved chunks. */
 export async function retrieveContext(question: string): Promise<RetrieveResult> {
+  console.log('[RAG] →', `${API_BASE}/chat/retreve`, { question });
+
   const res = await fetch(`${API_BASE}/chat/retreve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
   });
 
+  console.log('[RAG] status:', res.status);
+
   if (!res.ok) {
     throw new Error(`Retrieve failed: ${res.status}`);
   }
 
   const data = await res.json();
+  console.log('[RAG] chunks:', data.chunks?.length ?? 0, data.chunks);
+
   return {
     hasContext: Boolean(data.hasContext),
     chunks: Array.isArray(data.chunks) ? data.chunks : [],
@@ -47,8 +53,9 @@ export function buildSystemPrompt(chunks: RetrievedChunk[]): string {
 
   const context = chunks.map((c, i) => `[${i + 1}] ${c.text}`).join('\n\n');
   return [
-    'You are a helpful mentor. Answer the question using ONLY the context below.',
-    "If the context does not contain the answer, say you don't have that information.",
+    'You are a helpful mentor. The context below contains factual information — use it as your foundation.',
+    'Build on it freely: give examples, analogies, step-by-step explanations, and elaborations using your own knowledge.',
+    'Stay consistent with the context, but do not limit yourself to only what is literally written there.',
     '',
     'Context:',
     context,

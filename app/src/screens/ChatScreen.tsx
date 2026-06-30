@@ -59,6 +59,9 @@ export default function ChatScreen({ onBack }: { onBack: () => void }) {
       //    If the server is unreachable, fall back to no context.
       let systemPrompt: string;
       try {
+        // Retrieve using ONLY the current question. Mixing in prior turns
+        // (especially long assistant answers) pollutes the query — e.g. asking
+        // "what is typescript" after a RAG answer would still match RAG chunks.
         const { chunks } = await retrieveContext(text);
         systemPrompt = buildSystemPrompt(chunks);
       } catch (retrieveErr) {
